@@ -185,7 +185,9 @@ PY
  printf '%s\n' 'Installer verified. Starting guided setup.'
  # No exec here: the parent must retain its cleanup trap until setup finishes.
  # Passwords/interactive reads have a terminal; stdin is never the curl script.
- bash "$gridlens_scratch/gridlens/install.sh" setup "$@" <&"$gridlens_tty"
+ # Private scratch permissions must not leak into service installation: owned
+ # executables/directories need their declared read/execute bits for fleetdash.
+ (umask 022; bash "$gridlens_scratch/gridlens/install.sh" setup "$@" <&"$gridlens_tty")
 )
 
 # The final compound command must parse completely before the function runs.
