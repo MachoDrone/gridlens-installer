@@ -1,8 +1,8 @@
 # GridLens installer
 
 GridLens is a self-hosted dashboard for Nosana operators. Monitoring runs on host
-PCs; phones and laptops are viewing devices. **v0.3.2 suggests your public IPv4
-address, guides IPv4/IPv6 access, and provides phone VPN profiles in the terminal.**
+PCs; phones and laptops are viewing devices. **v0.3.3 simplifies setup and lets
+your saved GridLens WireGuard profile sign you into the dashboard automatically.**
 
 ## Start on your Nosana PC
 
@@ -23,7 +23,7 @@ Keep the terminal open and follow its steps:
 
 1. Name the PC in GridLens, choose remote or local-only use, and select home or managed-network guidance.
 2. Install or open the official WireGuard client using the displayed app link/QR.
-3. Save the GridLens login and scan the **VPN profile QR inside WireGuard**.
+3. Scan and save the **VPN profile QR inside WireGuard**. No additional phone password is needed.
 4. Turn on one saved connection and follow its authenticated dashboard connection test.
 
 The PC name labels it in GridLens; accepting the detected name does not rename
@@ -42,6 +42,14 @@ this lookup, and no credentials or fleet data are sent to the address service.
 The phone does not need an existing VPN or a private setup page to begin. Use its
 ordinary camera for the app/dashboard links, and WireGuard's scanner for the VPN
 profile. QR encoding is local. Keep the profile and login private.
+
+Setup uses spaced sections, bold prompts and color on compatible terminals.
+Detailed router troubleshooting is available through `help`, and an app-install
+QR is skipped when WireGuard is already installed. A recovery login for access
+without WireGuard is optional. LAN access uses a normal sign-in page with
+**Show/Hide password**, clear retry messages and a remembered browser session.
+Older saved Docker installations need the explicit upgrade below to enable
+automatic WireGuard sign-in; the same saved phone profile continues to work.
 
 At home, the phone can test a private address on the hosts' Wi-Fi. Away access
 requires reachable UDP through public IPv4 forwarding or a global IPv6 address
@@ -88,7 +96,7 @@ post-backup account/settings changes are reverted. Supply the same `--prefix` if
 the installation used a custom prefix. Only owned Docker resources participate.
 
 Each participating PC can optionally provide its own VPN entry. Save a separate
-profile/login for each and switch manually if needed. First-PC setup starts with
+profile for each and switch manually if needed. First-PC setup starts with
 one source; integrated fleet joining and shared accounts/settings remain unfinished.
 The product target remains 200+ hosts with any PC eligible to serve the dashboard.
 
