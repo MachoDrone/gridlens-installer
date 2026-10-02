@@ -164,7 +164,8 @@ try:
                       'container_runtime.py', 'container_probe.py', 'container_onboarding.py', 'legacy_import.py'))}
         if not required <= regular:
             raise ValueError('Docker installer package is incomplete')
-        allowed = required | {'gridlens/start.sh', 'gridlens/README.md', 'gridlens/LICENSE', 'gridlens/THIRD_PARTY_NOTICES.txt', 'gridlens/container/README.md',
+        allowed = required | {'gridlens/scripts/container_upgrade.py',
+                              'gridlens/start.sh', 'gridlens/README.md', 'gridlens/LICENSE', 'gridlens/THIRD_PARTY_NOTICES.txt', 'gridlens/container/README.md',
                               *('gridlens/docs/' + name for name in ('ACCESS.md', 'CLUSTER_PROTOCOL.md', 'HUB_MONITOR.md',
                                                                    'SECURITY.md', 'VALIDATION.md'))}
         allowed_directories = {'gridlens', 'gridlens/bin', 'gridlens/scripts', 'gridlens/container', 'gridlens/docs'}

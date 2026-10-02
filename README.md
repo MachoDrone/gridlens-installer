@@ -1,8 +1,8 @@
 # GridLens installer
 
 GridLens is a self-hosted dashboard for Nosana operators. Monitoring runs on host
-PCs; phones and laptops are viewing devices. **v0.3.0 installs GridLens in Docker
-and provides the phone VPN profile directly in the host terminal.**
+PCs; phones and laptops are viewing devices. **v0.3.1 explains each setup question,
+guides IPv4/IPv6 access, and provides phone VPN profiles directly in the terminal.**
 
 ## Start on your Nosana PC
 
@@ -21,20 +21,36 @@ Prompts use `/dev/tty` independently of the downloaded script.
 
 Keep the terminal open and follow its steps:
 
-1. Choose whether this PC should provide WireGuard access.
+1. Name the PC in GridLens, choose remote or local-only use, and select home or managed-network guidance.
 2. Install or open the official WireGuard client using the displayed app link/QR.
 3. Save the GridLens login and scan the **VPN profile QR inside WireGuard**.
-4. Turn the connection on and open the dashboard link or browser QR.
+4. Turn on one saved connection and follow its authenticated dashboard connection test.
+
+The PC name labels it in GridLens; accepting the detected name does not rename
+your computer. For remote home use, the address question asks for the router's
+public IPv4 address under WAN/Internet IP, or its hostname. Setup explains the
+exact UDP forwarding rule separately, using the PC's private address as its target.
 
 The phone does not need an existing VPN or a private setup page to begin. Use its
 ordinary camera for the app/dashboard links, and WireGuard's scanner for the VPN
 profile. QR encoding is local. Keep the profile and login private.
 
-At home, the phone can test a private endpoint on the hosts' Wi-Fi. Away access
-requires a reachable public IPv4 address or hostname and the router UDP mapping
-shown by setup. Router changes are manual; CGNAT/provider filtering can prevent
-access. There is no hosted relay or automatic VPN failover. A private home address
-will not become reachable from mobile data just because it appears in a QR.
+At home, the phone can test a private address on the hosts' Wi-Fi. Away access
+requires reachable UDP through public IPv4 forwarding or a global IPv6 address
+with inbound permission. Setup supplies home-router guidance or a copyable
+request for the network administrator. Router changes are manual; CGNAT/provider
+filtering can prevent access. There is no hosted relay or automatic VPN failover.
+
+Where configured, a device can save separate IPv4 and IPv6 profiles under one
+GridLens login, using distinct peer keys. Keep only one profile active at a time.
+Removing a lost device revokes both profiles; cancelling an added profile keeps
+the existing one. Save the switching instructions before leaving setup. Prefer
+IPv4 when both tests pass; an untested alternate is not a working backup.
+
+The connection test reports authenticated dashboard access, VPN activity,
+server-observed transport family and user-confirmed mobile-data use separately.
+Turn off phone Wi-Fi for a remote test. Detecting IPv6 on the PC does not prove
+that the phone can connect, and a successful test covers its current network only.
 
 ## Existing hubs and saved connections
 
@@ -51,6 +67,17 @@ volume, image, server identity, ports and peers are reused. Existing profiles do
 not need another QR scan after a container restart. Lost profiles get a distinct
 replacement enrollment. Accounts copied from an older hub are independent;
 revoking one in Docker does not revoke it on the older hub.
+
+Existing Docker installations retain their saved image on ordinary reruns.
+To explicitly upgrade the owned containers with a consistent volume backup:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MachoDrone/gridlens-installer/main/start.sh | bash -s -- --upgrade
+```
+
+Use `--rollback` instead to restore the retained pre-upgrade state and image;
+post-backup account/settings changes are reverted. Supply the same `--prefix` if
+the installation used a custom prefix. Only owned Docker resources participate.
 
 Each participating PC can optionally provide its own VPN entry. Save a separate
 profile/login for each and switch manually if needed. First-PC setup starts with
@@ -70,7 +97,12 @@ terminal profile QRs were independently decoded and used by a test WireGuard cli
 to open the full six-PC/eight-host dashboard. nn06 reused the same profile/login
 after a Docker restart. Physical Android import, a real host reboot and outside-home
 UDP access remain separate checks. Arm64 is cross-compiled and package-verified,
-not hardware-tested. Detailed validation is bundled with the installer.
+not hardware-tested. The v0.3.1 update also passed isolated Docker IPv4 connection
+proof, spoofed-LAN rejection, native IPv6 transport inside a Docker bridge,
+restart, and an actual v0.3.0-to-v0.3.1 upgrade and rollback using the same saved
+profile/login. Public IPv6 and Android mobile-data acceptance remain pending;
+the existing lab has no global IPv6 route. Detailed validation is bundled with
+the installer.
 
 Releases contain `gridlens-linux-amd64.tar.gz`, `gridlens-linux-arm64.tar.gz` and
 `SHA256SUMS`. The bootstrap pins downloads to one release and verifies checksum,
