@@ -1,67 +1,84 @@
 # GridLens installer
 
-GridLens is a self-hosted dashboard for Nosana operators. Host PCs collect and
-replicate observations; phones and laptops are viewing devices.
+GridLens is a self-hosted dashboard for Nosana operators. Monitoring runs on host
+PCs; phones and laptops are viewing devices. **v0.3.0 installs GridLens in Docker
+and provides the phone VPN profile directly in the host terminal.**
 
 ## Start on your Nosana PC
 
-Run this single command in an interactive Ubuntu/Debian host terminal, or through
-an SSH session with a terminal:
+Run in an interactive Ubuntu/Debian host terminal, or an SSH session with a terminal:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/MachoDrone/gridlens-installer/main/start.sh | bash
 ```
 
-The bootstrap downloads and verifies the matching release automatically. You do
-not need Git, Go, a GitHub account, or a manual package download. Bash, curl,
-Python 3 and standard Linux utilities must be available. Linux amd64 and arm64
-packages are provided.
+Docker must already be installed and running. Bash, curl and Python 3 must be
+available. The command downloads and verifies the matching Linux amd64/arm64
+bundle automatically; no Git, Go, GitHub account or manual download is needed.
+The first run prepares its image locally. Packages are installed inside the image,
+never on the host OS. If sudo asks, enter the PC's password in the terminal.
+Prompts use `/dev/tty` independently of the downloaded script.
 
-If sudo asks, enter the host administrator password in the terminal. Nothing
-appears while you type. Interactive prompts use the terminal independently of the
-script pipe. The webapp never asks for your operating-system password.
+Keep the terminal open and follow its steps:
 
-Keep the terminal open. It prints a private setup link and a QR code you can scan
-with your phone camera. The browser also offers **Open setup on my phone**.
-The QR opens a page on your home PC; it does not connect the phone to your home network.
-Before opening or scanning it:
+1. Choose whether this PC should provide WireGuard access.
+2. Install or open the official WireGuard client using the displayed app link/QR.
+3. Save the GridLens login and scan the **VPN profile QR inside WireGuard**.
+4. Turn the connection on and open the dashboard link or browser QR.
 
-- At home, connect your viewing device to the hosts' network.
-- Away, turn on a VPN that already reaches your home LAN **on the phone itself** before opening the link. An SSH session on your laptop does not connect a separate phone.
-- Away without that connection, first setup requires local access.
+The phone does not need an existing VPN or a private setup page to begin. Use its
+ordinary camera for the app/dashboard links, and WireGuard's scanner for the VPN
+profile. QR encoding is local. Keep the profile and login private.
 
-Setup-page QR codes use the phone camera. A separately labeled WireGuard profile
-QR is scanned inside WireGuard. All QR encoding is local and bundled; there is no
-QR package to install or online QR service. Keep these temporary codes private.
+At home, the phone can test a private endpoint on the hosts' Wi-Fi. Away access
+requires a reachable public IPv4 address or hostname and the router UDP mapping
+shown by setup. Router changes are manual; CGNAT/provider filtering can prevent
+access. There is no hosted relay or automatic VPN failover. A private home address
+will not become reachable from mobile data just because it appears in a QR.
 
-Follow the setup screen. Existing installations open device setup without being
-reinstalled. Fresh installation previews changes, asks approval for missing access
-packages, verifies browser access and starts monitoring on this host. Save a new
-VPN profile and GridLens login before switching the VPN on.
+## Existing hubs and saved connections
 
-## Current scope
+A fresh PC gets core/probe containers and persistent state/observations volumes.
+A confirmed GridLens hub on the same PC instead adds one Docker replica. Setup
+reads only verified GridLens-owned hub identity, signed fleet data, settings and
+credential hashes. It preserves the existing fleet view and leaves the old hub,
+collectors, VPN, SSH and Nosana workloads running. Fresh observations on this
+compatibility path still depend on those existing host collectors/fleet services;
+this release does not remove or fully migrate them into Docker.
 
-This is an early release. It preserves the existing Monitor/Fleet interface.
-First-host setup initializes one PC; joining further PCs and shared accounts or
-settings remain separate administrator work. Existing VPN, SSH and Nosana
-workloads are outside GridLens's ownership. Direct WireGuard access from outside
-home requires a reachable endpoint and any necessary router forwarding.
+Rerun the same command to add a phone or use an existing connection. The saved
+volume, image, server identity, ports and peers are reused. Existing profiles do
+not need another QR scan after a container restart. Lost profiles get a distinct
+replacement enrollment. Accounts copied from an older hub are independent;
+revoking one in Docker does not revoke it on the older hub.
 
-The pipeline/terminal paths, archive checks, guided UI, activation receipts and
-existing-hub setup have automated and lab coverage. A complete fresh-OS wizard
-installation, physical phone import and direct outside-network access remain
-unverified. Arm64 is cross-compiled; hardware execution is not yet validated.
-Details are included in the installer documentation.
+Each participating PC can optionally provide its own VPN entry. Save a separate
+profile/login for each and switch manually if needed. First-PC setup starts with
+one source; integrated fleet joining and shared accounts/settings remain unfinished.
+The product target remains 200+ hosts with any PC eligible to serve the dashboard.
 
-## Release contents
+The installer creates only owned Docker resources, not host packages, users or
+systemd services. Docker manages its own bridges and published-port networking.
+The web container has no Docker socket. In a fresh install, a separate fixed-purpose
+probe has daemon access for approved inventory checks; a read-only socket mount
+is not a Docker API permission boundary.
 
-Each version provides `gridlens-linux-amd64.tar.gz`,
-`gridlens-linux-arm64.tar.gz`, and `SHA256SUMS`. The bootstrap pins all downloads
-to one release and validates the checksum, metadata and architecture before
-starting the installer. SHA256SUMS is an integrity check from this repository,
+## Validation and distribution
+
+The Docker phone flow was exercised on nn05 and password-protected nn06. Actual
+terminal profile QRs were independently decoded and used by a test WireGuard client
+to open the full six-PC/eight-host dashboard. nn06 reused the same profile/login
+after a Docker restart. Physical Android import, a real host reboot and outside-home
+UDP access remain separate checks. Arm64 is cross-compiled and package-verified,
+not hardware-tested. Detailed validation is bundled with the installer.
+
+Releases contain `gridlens-linux-amd64.tar.gz`, `gridlens-linux-arm64.tar.gz` and
+`SHA256SUMS`. The bootstrap pins downloads to one release and verifies checksum,
+Docker metadata, archive layout and native architecture before execution. The new
+bootstrap refuses old host-service packages. Checksums provide repository integrity,
 not an independently signed maintainer identity.
 
-This repository hosts only the bootstrap, operator instructions, license and
-release assets. Application source history remains in the private development
-repository. The packages contain the executable and required Python helpers.
-GitHub is used for distribution, not runtime monitoring or replication.
+This public repository contains only the bootstrap, instructions, license and
+release assets. Application source history remains private. The package contains
+the executable, reviewed installer helpers and image recipe. GitHub is used for
+distribution; runtime collection and replication do not depend on GitHub or a laptop.

@@ -8,9 +8,10 @@ gridlens_bootstrap() (
 
  fail() { printf 'GridLens: %s\n' "$*" >&2; exit 1; }
  if [[ "${1:-}" == --help || "${1:-}" == -h ]]; then
-  printf '%s\n' 'GridLens GitHub installer' \
+  printf '%s\n' 'GridLens Docker installer from GitHub' \
    'Run in a host terminal, or an SSH session with a terminal.' \
-   'The installer downloads and checks its release automatically.' \
+   'The installer downloads and checks a Docker-only release automatically.' \
+   'An existing local Docker daemon is required; no host packages or services are installed.' \
    'Administrator prompts use your terminal, never the downloaded script input.' \
    'Optional: GRIDLENS_VERSION=vX.Y.Z pins a release; GRIDLENS_REPOSITORY=owner/repo selects its GitHub repository.' \
    'Arguments are passed to guided setup, for example: --bind 192.168.1.20'
@@ -25,7 +26,7 @@ gridlens_bootstrap() (
  for tool in curl python3 mktemp uname; do
   command -v "$tool" >/dev/null || fail "Required tool is missing: $tool. Install it on this host and run setup again."
  done
- [[ $(uname -s) == Linux ]] || fail 'The host installer currently supports Linux with systemd (Ubuntu/Debian).'
+ [[ $(uname -s) == Linux ]] || fail 'The Docker installer currently supports Linux (Ubuntu/Debian) with Docker already installed.'
  case $(uname -m) in
   x86_64|amd64) gridlens_arch=amd64 ;;
   aarch64|arm64) gridlens_arch=arm64 ;;
@@ -148,12 +149,27 @@ try:
                 raise ValueError('unsafe installer archive entry')
             seen.add(name)
             members.append((member, root.joinpath(*parts)))
-        required = {'gridlens/install.sh', 'gridlens/bin/gridlens', 'gridlens/RELEASE.json', 'gridlens/scripts/fleetctl.py',
-                    'gridlens/scripts/first_setup.py', 'gridlens/scripts/first_setup_ui.py',
-                    'gridlens/scripts/device_setup.py', 'gridlens/scripts/collectorctl.py'}
         regular = {m.name.rstrip('/') for m, _ in members if m.isreg()}
+        metadata_entry = next((m for m, _ in members if m.name == 'gridlens/RELEASE.json' and m.isreg()), None)
+        if metadata_entry is None or metadata_entry.size > 16384:
+            raise ValueError('release metadata is missing or too large')
+        metadata = json.loads(archive.extractfile(metadata_entry).read(16385))
+        if not isinstance(metadata, dict) or metadata.get('schema') != 2 or metadata.get('installation') != 'docker':
+            raise ValueError('this is a legacy host-service release, not a schema-2 Docker installer; choose a Docker release such as v0.3.0 or newer')
+        if metadata.get('version') != version or metadata.get('target') != 'linux/' + architecture:
+            raise ValueError('release version or architecture did not match')
+        required = {'gridlens/install.sh', 'gridlens/bin/gridlens', 'gridlens/RELEASE.json',
+                    'gridlens/container/Dockerfile',
+                    *('gridlens/scripts/' + name for name in ('docker_setup.py', 'dockerctl.py',
+                      'container_runtime.py', 'container_probe.py', 'container_onboarding.py', 'legacy_import.py'))}
         if not required <= regular:
-            raise ValueError('installer package is incomplete')
+            raise ValueError('Docker installer package is incomplete')
+        allowed = required | {'gridlens/start.sh', 'gridlens/README.md', 'gridlens/LICENSE', 'gridlens/THIRD_PARTY_NOTICES.txt', 'gridlens/container/README.md',
+                              *('gridlens/docs/' + name for name in ('ACCESS.md', 'CLUSTER_PROTOCOL.md', 'HUB_MONITOR.md',
+                                                                   'SECURITY.md', 'VALIDATION.md'))}
+        allowed_directories = {'gridlens', 'gridlens/bin', 'gridlens/scripts', 'gridlens/container', 'gridlens/docs'}
+        if regular - allowed or any(m.isdir() and m.name.rstrip('/') not in allowed_directories for m, _ in members):
+            raise ValueError('Docker installer contains an unapproved file; legacy host-service helpers are not allowed')
         for member, target in members:
             if member.isdir():
                 target.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -166,13 +182,6 @@ try:
                 raise ValueError('truncated installer archive entry')
         for name in ('gridlens/install.sh', 'gridlens/bin/gridlens'):
             os.chmod(root / name, 0o700)
-    metadata_path = root / 'gridlens/RELEASE.json'
-    if metadata_path.stat().st_size > 16384:
-        raise ValueError('release metadata is too large')
-    metadata = json.loads(metadata_path.read_text())
-    if (not isinstance(metadata, dict) or metadata.get('schema') != 1
-            or metadata.get('version') != version or metadata.get('target') != 'linux/' + architecture):
-        raise ValueError('release version or architecture did not match')
     with (root / 'gridlens/bin/gridlens').open('rb') as program:
         header = program.read(64)
     if (len(header) < 64 or header[:6] != b'\x7fELF\x02\x01'
@@ -182,11 +191,11 @@ except (OSError, ValueError, tarfile.TarError, EOFError, UnicodeError, OverflowE
     raise SystemExit('GridLens installer verification failed: ' + str(error))
 PY
 
- printf '%s\n' 'Installer verified. Starting guided setup.'
+ printf '%s\n' 'Docker installer verified. Starting terminal setup.'
  # No exec here: the parent must retain its cleanup trap until setup finishes.
  # Passwords/interactive reads have a terminal; stdin is never the curl script.
- # Private scratch permissions must not leak into service installation: owned
- # executables/directories need their declared read/execute bits for fleetdash.
+ # Keep the download directory private; let the Docker coordinator apply the
+ # file modes required by its temporary build context and owned volumes.
  (umask 022; bash "$gridlens_scratch/gridlens/install.sh" setup "$@" <&"$gridlens_tty")
 )
 
