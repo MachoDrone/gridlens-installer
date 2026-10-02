@@ -1,7 +1,7 @@
 # GridLens installer
 
 GridLens is a self-hosted dashboard for Nosana operators. Monitoring runs on host
-PCs; phones and laptops are viewing devices. **v0.3.4 simplifies setup and lets
+PCs; phones and laptops are viewing devices. **v0.3.5 simplifies setup and lets
 your saved GridLens WireGuard profile sign you into the dashboard automatically.**
 
 ## Start on your Nosana PC
@@ -93,6 +93,10 @@ To explicitly upgrade the owned containers with a consistent volume backup:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/MachoDrone/gridlens-installer/main/start.sh | bash -s -- --upgrade
 ```
+
+v0.3.5 reports **already up to date** if the installed image and requested network
+settings already match. It does not restart GridLens or create another backup in
+that case. Updates show a short result and your dashboard link.
 
 Use `--rollback` instead to restore the retained pre-upgrade state and image;
 post-backup account/settings changes are reverted. Supply the same `--prefix` if
