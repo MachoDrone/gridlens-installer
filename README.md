@@ -1,8 +1,8 @@
 # GridLens installer
 
 GridLens is a self-hosted dashboard for Nosana operators. Monitoring runs on host
-PCs; phones and laptops are viewing devices. **v0.3.1 explains each setup question,
-guides IPv4/IPv6 access, and provides phone VPN profiles directly in the terminal.**
+PCs; phones and laptops are viewing devices. **v0.3.2 suggests your public IPv4
+address, guides IPv4/IPv6 access, and provides phone VPN profiles in the terminal.**
 
 ## Start on your Nosana PC
 
@@ -30,6 +30,14 @@ The PC name labels it in GridLens; accepting the detected name does not rename
 your computer. For remote home use, the address question asks for the router's
 public IPv4 address under WAN/Internet IP, or its hostname. Setup explains the
 exact UDP forwarding rule separately, using the PC's private address as its target.
+
+When no public IPv4 is assigned to the PC, remote setup checks `api.ipify.org`
+over HTTPS and says **"Your public Internet IPv4 address may be ..."**. A VPN or
+upstream NAT can make the observed address differ from the router's WAN address.
+The question is **Home Public Internet IPv4 address (or hostname)**; press Enter
+to accept the suggestion or replace it. Failed lookups allow manual entry.
+Local-only setup, saved-installation reruns and ordinary monitoring do not make
+this lookup, and no credentials or fleet data are sent to the address service.
 
 The phone does not need an existing VPN or a private setup page to begin. Use its
 ordinary camera for the app/dashboard links, and WireGuard's scanner for the VPN
