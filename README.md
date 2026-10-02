@@ -21,11 +21,18 @@ If sudo asks, enter the host administrator password in the terminal. Nothing
 appears while you type. Interactive prompts use the terminal independently of the
 script pipe. The webapp never asks for your operating-system password.
 
-Keep the terminal open. It tells you how to reach the private setup link:
+Keep the terminal open. It prints a private setup link and a QR code you can scan
+with your phone camera. The browser also offers **Open setup on my phone**.
+The QR opens a page on your home PC; it does not connect the phone to your home network.
+Before opening or scanning it:
 
 - At home, connect your viewing device to the hosts' network.
-- Away, connect a VPN that already reaches your hosts before opening the link.
+- Away, turn on a VPN that already reaches your home LAN **on the phone itself** before opening the link. An SSH session on your laptop does not connect a separate phone.
 - Away without that connection, first setup requires local access.
+
+Setup-page QR codes use the phone camera. A separately labeled WireGuard profile
+QR is scanned inside WireGuard. All QR encoding is local and bundled; there is no
+QR package to install or online QR service. Keep these temporary codes private.
 
 Follow the setup screen. Existing installations open device setup without being
 reinstalled. Fresh installation previews changes, asks approval for missing access
