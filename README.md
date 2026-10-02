@@ -1,7 +1,7 @@
 # GridLens installer
 
 GridLens is a self-hosted dashboard for Nosana operators. Monitoring runs on host
-PCs; phones and laptops are viewing devices. **v0.3.3 simplifies setup and lets
+PCs; phones and laptops are viewing devices. **v0.3.4 simplifies setup and lets
 your saved GridLens WireGuard profile sign you into the dashboard automatically.**
 
 ## Start on your Nosana PC
@@ -50,6 +50,9 @@ without WireGuard is optional. LAN access uses a normal sign-in page with
 **Show/Hide password**, clear retry messages and a remembered browser session.
 Older saved Docker installations need the explicit upgrade below to enable
 automatic WireGuard sign-in; the same saved phone profile continues to work.
+The dashboard opens directly, with device help available on demand. Copy link
+also attempts copying on private HTTP connections; if the browser blocks it,
+the selected address remains available for manual copying.
 
 At home, the phone can test a private address on the hosts' Wi-Fi. Away access
 requires reachable UDP through public IPv4 forwarding or a global IPv6 address
