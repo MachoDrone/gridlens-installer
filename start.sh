@@ -169,7 +169,8 @@ try:
                       'container_runtime.py', 'container_probe.py', 'container_onboarding.py', 'legacy_import.py'))}
         if not required <= regular:
             raise ValueError('Docker installer package is incomplete')
-        allowed = required | {'gridlens/scripts/container_upgrade.py', 'gridlens/scripts/container_access.py',
+        allowed = required | {'gridlens/scripts/container_updates.py', 'gridlens/scripts/container_update_control.py',
+                              'gridlens/docs/AUTOMATIC_UPDATES.md', 'gridlens/scripts/container_upgrade.py', 'gridlens/scripts/container_access.py',
                               'gridlens/docs/TROUBLESHOOTING.md', 'gridlens/docs/COORDINATOR.md', 'gridlens/scripts/container_telemetry.py', 'gridlens/scripts/docker_telemetry_setup.py',
                               'gridlens/start.sh', 'gridlens/README.md', 'gridlens/LICENSE', 'gridlens/THIRD_PARTY_NOTICES.txt', 'gridlens/container/README.md',
                               *('gridlens/docs/' + name for name in ('ACCESS.md', 'CLUSTER_PROTOCOL.md', 'HUB_MONITOR.md',
@@ -202,8 +203,8 @@ PY
  # reads supported saved formats without changing the selected runtime release.
  # These pins are updated together only after the standalone support archive
  # has been published and verified; environment variables cannot override them.
- gridlens_coordinator_commit='935b69f6c636a932be7232739b374aca72f401a1'
- gridlens_coordinator_sha256='97ba11f4bff518b39e1c3c3f09c51224b847e40057adfd3bc5a97d996545b949'
+ gridlens_coordinator_commit='745adc0e11c1b332a1ead560add1859da9818d94'
+ gridlens_coordinator_sha256='526e1c2590084a47e1655c20c9347b8dac8fc99feb6bc66322b56e9961870a9f'
  gridlens_coordinator_url="https://raw.githubusercontent.com/MachoDrone/gridlens-installer/$gridlens_coordinator_commit/support/gridlens-coordinator.zip"
  download "$gridlens_coordinator_url" "$gridlens_scratch/gridlens-coordinator.zip" 4194304
  gridlens_coordinator_version=$(python3 - "$gridlens_scratch" "$gridlens_coordinator_sha256" <<'PY'
@@ -211,7 +212,8 @@ import hashlib, json, os, pathlib, re, stat, sys, zipfile
 
 root, expected = pathlib.Path(sys.argv[1]), sys.argv[2]
 helpers = {'docker_setup.py', 'dockerctl.py', 'container_onboarding.py',
-           'container_access.py', 'container_upgrade.py', 'docker_telemetry_setup.py'}
+           'container_access.py', 'container_upgrade.py', 'docker_telemetry_setup.py',
+           'container_updates.py', 'container_update_control.py'}
 try:
     payload = (root / 'gridlens-coordinator.zip').read_bytes()
     if not re.fullmatch(r'[a-f0-9]{64}', expected) or hashlib.sha256(payload).hexdigest() != expected:
