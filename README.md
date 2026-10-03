@@ -1,8 +1,26 @@
 # GridLens installer
 
 GridLens is a self-hosted dashboard for Nosana operators. Monitoring runs on host
-PCs; phones and laptops are viewing devices. **v0.3.5 simplifies setup and lets
-your saved GridLens WireGuard profile sign you into the dashboard automatically.**
+PCs; phones and laptops are viewing devices. **v0.3.6 supports your existing VPN or guided WireGuard setup,
+with familiar LAN dashboard addresses and browser sign-in links.**
+
+Choose **Use my existing VPN or home Wi-Fi** to skip VPN setup for that device.
+Users without an existing connection can follow guided GridLens WireGuard setup.
+Existing-network browsers receive a one-time sign-in link, so no generated
+password needs to be typed. The link expires after ten minutes; the browser stays
+signed in for thirty days and device revocation still applies.
+
+The managed connection can open the dashboard using the PC's private LAN address
+and dashboard port. It remains limited to this dashboard, not the rest of the LAN.
+Old profiles and their original links keep working; setup explains the one-time
+AllowedIPs addition for eligible existing profiles without replacing their keys.
+Local endpoints using that same LAN address and uncertain hostname routes retain
+the original tunnel address to avoid a routing loop.
+
+New installations beside an older dashboard prefer free four-digit ports. To move
+an existing Docker dashboard explicitly, add `--http-port 8789` to the upgrade
+command below. The installer checks availability and preserves the old port in its
+rollback backup. Ordinary reruns and upgrades without that option keep saved ports.
 
 ## Start on your Nosana PC
 
