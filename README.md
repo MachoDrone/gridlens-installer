@@ -22,6 +22,31 @@ an existing Docker dashboard explicitly, add `--http-port 8789` to the upgrade
 command below. The installer checks availability and preserves the old port in its
 rollback backup. Ordinary reruns and upgrades without that option keep saved ports.
 
+## Signed development updates
+
+The stable installer remains **v0.3.6**. The separate signed development channel
+currently provides **[v0.3.8-dev4](https://github.com/MachoDrone/gridlens-installer/releases/tag/v0.3.8-dev4)**
+with **Updates → Automatic updates (entire fleet)**. The six-PC acceptance fleet
+has it enabled and automatically upgraded from dev2 to dev4, including its updater
+engines, while retaining eight signed hosts, accounts, profiles, identities and ports.
+
+One approved coordinator checks GitHub on a two-minute base schedule with jitter,
+quota-aware delays and persistent backoff. Every approved PC prepares the release
+before installation, then PCs update one at a time with the coordinator last.
+Development setup uses one canonical private PC address and explicit dashboard
+port. Phone/router and full-machine reboot acceptance remain separate.
+
+To opt an existing Docker installation into the current development build:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/MachoDrone/gridlens-installer/main/start.sh | GRIDLENS_VERSION=v0.3.8-dev4 bash -s -- --upgrade
+```
+
+Then explicitly approve the update roster on every PC and enable the GUI switch;
+telemetry or VPN enrollment alone does not grant update approval. See
+[automatic update setup and diagnostics](docs/AUTOMATIC_UPDATES.md). For a fresh
+PC, omit `--upgrade`. The normal stable setup examples below remain available.
+
 ## Start on your Nosana PC
 
 Run in an interactive Ubuntu/Debian host terminal, or an SSH session with a terminal:
