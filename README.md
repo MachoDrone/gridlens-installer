@@ -112,6 +112,19 @@ To explicitly upgrade the owned containers with a consistent volume backup:
 curl -fsSL https://raw.githubusercontent.com/MachoDrone/gridlens-installer/main/start.sh | bash -s -- --upgrade
 ```
 
+The bootstrap also verifies a separately versioned terminal coordinator, pinned
+to an immutable public commit and SHA-256 digest. This keeps the normal command
+usable when a newer candidate is already installed but the public runtime release
+is older. Ordinary setup retains that saved image and its devices. Default
+`--upgrade` reports both versions and keeps the newer installation; it does not
+restart it, downgrade it, or claim the candidate is a published release.
+
+An explicitly pinned older release is refused. Configuration changes requested
+against an older selected runtime are also refused explicitly; no requested
+setting is silently discarded. Fresh installations and matching/forward updates
+use the verified runtime bundle's original installer and unchanged image inputs.
+Updating the terminal coordinator does not promote a new application release.
+
 v0.3.5 reports **already up to date** if the installed image and requested network
 settings already match. It does not restart GridLens or create another backup in
 that case. Updates show a short result and your dashboard link.
@@ -151,7 +164,10 @@ Docker metadata, archive layout and native architecture before execution. The ne
 bootstrap refuses old host-service packages. Checksums provide repository integrity,
 not an independently signed maintainer identity.
 
-This public repository contains only the bootstrap, instructions, license and
-release assets. Application source history remains private. The package contains
+This public repository contains the bootstrap, instructions, license, versioned
+terminal-coordinator support and release assets. The coordinator archive includes
+only reviewed terminal/Docker helpers and its integrity manifest; it contains no
+application Go source, runtime image or lab evidence. Application source history
+remains private. The package contains
 the executable, reviewed installer helpers and image recipe. GitHub is used for
 distribution; runtime collection and replication do not depend on GitHub or a laptop.

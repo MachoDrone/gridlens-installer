@@ -11,6 +11,7 @@ gridlens_bootstrap() (
   printf '%s\n' 'GridLens Docker installer from GitHub' \
    'Run in a host terminal, or an SSH session with a terminal.' \
    'The installer downloads and checks a Docker-only release automatically.' \
+   'A separately verified terminal coordinator preserves newer installed builds.' \
    'An existing local Docker daemon is required; no host packages or services are installed.' \
    'Administrator prompts use your terminal, never the downloaded script input.' \
    'Optional: GRIDLENS_VERSION=vX.Y.Z pins a release; GRIDLENS_REPOSITORY=owner/repo selects its GitHub repository.' \
@@ -35,9 +36,13 @@ gridlens_bootstrap() (
  gridlens_repository=${GRIDLENS_REPOSITORY:-MachoDrone/gridlens-installer}
  [[ "$gridlens_repository" =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,99}/[A-Za-z0-9][A-Za-z0-9._-]{0,99}$ ]] || fail 'Invalid GitHub repository; use owner/repository.'
  gridlens_version=${GRIDLENS_VERSION:-}
+ gridlens_coordinator_flags=(--bootstrap-selected)
+ if [[ -n "$gridlens_version" ]]; then
+  gridlens_coordinator_flags+=(--bootstrap-explicit-version)
+ fi
  gridlens_curl=(--fail --location --silent --show-error --proto '=https' --proto-redir '=https' --max-redirs 5 --connect-timeout 15 --max-time 180)
  if [[ -z "$gridlens_version" ]]; then
-  printf '%s\n' 'Finding the published GridLens installer…'
+  printf '%s\n' 'Finding the published GridLens installer…' >&"$gridlens_tty"
   gridlens_latest=$(curl "${gridlens_curl[@]}" --head --output /dev/null --write-out '%{url_effective}' \
    "https://github.com/$gridlens_repository/releases/latest") || fail 'The GitHub installer release is unavailable. The repository must have publicly downloadable releases.'
   gridlens_prefix="https://github.com/$gridlens_repository/releases/tag/"
@@ -78,7 +83,7 @@ with os.fdopen(fd, "wb") as output:
   fi
  }
 
- printf 'Downloading GridLens %s for Linux %s…\n' "$gridlens_version" "$gridlens_arch"
+ printf 'Downloading GridLens %s for Linux %s…\n' "$gridlens_version" "$gridlens_arch" >&"$gridlens_tty"
  download "$gridlens_base/SHA256SUMS" "$gridlens_scratch/SHA256SUMS" 65536
  download "$gridlens_base/$gridlens_asset" "$gridlens_scratch/$gridlens_asset" 134217728
 
@@ -164,7 +169,8 @@ try:
                       'container_runtime.py', 'container_probe.py', 'container_onboarding.py', 'legacy_import.py'))}
         if not required <= regular:
             raise ValueError('Docker installer package is incomplete')
-        allowed = required | {'gridlens/scripts/container_upgrade.py',
+        allowed = required | {'gridlens/scripts/container_upgrade.py', 'gridlens/scripts/container_access.py',
+                              'gridlens/docs/TROUBLESHOOTING.md', 'gridlens/docs/COORDINATOR.md', 'gridlens/scripts/container_telemetry.py', 'gridlens/scripts/docker_telemetry_setup.py',
                               'gridlens/start.sh', 'gridlens/README.md', 'gridlens/LICENSE', 'gridlens/THIRD_PARTY_NOTICES.txt', 'gridlens/container/README.md',
                               *('gridlens/docs/' + name for name in ('ACCESS.md', 'CLUSTER_PROTOCOL.md', 'HUB_MONITOR.md',
                                                                    'SECURITY.md', 'VALIDATION.md'))}
@@ -192,12 +198,75 @@ except (OSError, ValueError, tarfile.TarError, EOFError, UnicodeError, OverflowE
     raise SystemExit('GridLens installer verification failed: ' + str(error))
 PY
 
- printf '%s\n' 'Docker installer verified. Starting terminal setup.'
+ # Terminal coordination has its own reviewed, immutable delivery. Its code
+ # reads supported saved formats without changing the selected runtime release.
+ # These pins are updated together only after the standalone support archive
+ # has been published and verified; environment variables cannot override them.
+ gridlens_coordinator_commit='935b69f6c636a932be7232739b374aca72f401a1'
+ gridlens_coordinator_sha256='97ba11f4bff518b39e1c3c3f09c51224b847e40057adfd3bc5a97d996545b949'
+ gridlens_coordinator_url="https://raw.githubusercontent.com/MachoDrone/gridlens-installer/$gridlens_coordinator_commit/support/gridlens-coordinator.zip"
+ download "$gridlens_coordinator_url" "$gridlens_scratch/gridlens-coordinator.zip" 4194304
+ gridlens_coordinator_version=$(python3 - "$gridlens_scratch" "$gridlens_coordinator_sha256" <<'PY'
+import hashlib, json, os, pathlib, re, stat, sys, zipfile
+
+root, expected = pathlib.Path(sys.argv[1]), sys.argv[2]
+helpers = {'docker_setup.py', 'dockerctl.py', 'container_onboarding.py',
+           'container_access.py', 'container_upgrade.py', 'docker_telemetry_setup.py'}
+try:
+    payload = (root / 'gridlens-coordinator.zip').read_bytes()
+    if not re.fullmatch(r'[a-f0-9]{64}', expected) or hashlib.sha256(payload).hexdigest() != expected:
+        raise ValueError('terminal coordinator checksum did not match')
+    with zipfile.ZipFile(root / 'gridlens-coordinator.zip') as archive:
+        entries = archive.infolist()
+        if len(entries) != len(helpers) + 1 or {item.filename for item in entries} != helpers | {'COORDINATOR.json'}:
+            raise ValueError('terminal coordinator contains missing, duplicate or unapproved files')
+        total = 0
+        for item in entries:
+            total += item.file_size
+            if (item.is_dir() or item.create_system != 3 or
+                    not stat.S_ISREG(item.external_attr >> 16) or item.flag_bits & 1 or
+                    item.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED) or
+                    item.file_size < 0 or item.file_size > 1048576 or total > 4194304):
+                raise ValueError('unsafe terminal coordinator archive entry')
+        manifest = archive.getinfo('COORDINATOR.json')
+        if manifest.file_size > 16384:
+            raise ValueError('oversized terminal coordinator metadata')
+        metadata = json.loads(archive.read(manifest))
+        if (not isinstance(metadata, dict) or metadata.get('schema') != 1 or
+                metadata.get('kind') != 'gridlens-terminal-coordinator' or
+                not isinstance(metadata.get('version'), str) or
+                not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,127}', metadata['version']) or
+                not isinstance(metadata.get('files'), dict) or set(metadata['files']) != helpers or
+                not isinstance(metadata.get('sourceCommit'), str) or
+                not re.fullmatch(r'[a-f0-9]{40}', metadata['sourceCommit']) or
+                metadata.get('sourceDirty') is not False):
+            raise ValueError('invalid terminal coordinator metadata')
+        contents = {}
+        for name in sorted(helpers):
+            data = archive.read(name)
+            if hashlib.sha256(data).hexdigest() != metadata['files'][name]:
+                raise ValueError('terminal coordinator file digest did not match')
+            contents[name] = data
+        destination = root / 'coordinator'
+        destination.mkdir(mode=0o700)
+        for name, data in contents.items():
+            fd = os.open(destination / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(fd, 'wb') as output:
+                output.write(data)
+        print(metadata['version'])
+except (OSError, ValueError, KeyError, TypeError, zipfile.BadZipFile, RuntimeError, UnicodeError, OverflowError, RecursionError) as error:
+    raise SystemExit('GridLens coordinator verification failed: ' + str(error))
+PY
+ )
+
+ printf '%s\n' 'Docker release and terminal coordinator verified. Starting terminal setup.' >&"$gridlens_tty"
  # No exec here: the parent must retain its cleanup trap until setup finishes.
  # Passwords/interactive reads have a terminal; stdin is never the curl script.
  # Keep the download directory private; let the Docker coordinator apply the
  # file modes required by its temporary build context and owned volumes.
- (umask 022; bash "$gridlens_scratch/gridlens/install.sh" setup "$@" <&"$gridlens_tty")
+ (umask 022; python3 -B "$gridlens_scratch/coordinator/docker_setup.py" \
+  --package-dir "$gridlens_scratch/gridlens" "${gridlens_coordinator_flags[@]}" \
+  --coordinator-version "$gridlens_coordinator_version" "$@" <&"$gridlens_tty")
 )
 
 # The final compound command must parse completely before the function runs.
