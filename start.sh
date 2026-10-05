@@ -204,8 +204,8 @@ PY
  # reads supported saved formats without changing the selected runtime release.
  # These pins are updated together only after the standalone support archive
  # has been published and verified; environment variables cannot override them.
- gridlens_coordinator_commit='d624fd9905fb2ef378c0d7ba0d3ca5e7690c4623'
- gridlens_coordinator_sha256='1d66d4968c91b822e0dab13141b58dcd57e0dafc89398a1b7e2b312eacfd9bb3'
+ gridlens_coordinator_commit='9791d6e2b9d4ba6976e04f5a465f25d9002ce52d'
+ gridlens_coordinator_sha256='43bf887beddf5bb364426991e6548d12b2f61cd04c29e0884b0b6cdf1842ac99'
  gridlens_coordinator_url="https://raw.githubusercontent.com/MachoDrone/gridlens-installer/$gridlens_coordinator_commit/support/gridlens-coordinator.zip"
  download "$gridlens_coordinator_url" "$gridlens_scratch/gridlens-coordinator.zip" 4194304
  gridlens_coordinator_version=$(python3 - "$gridlens_scratch" "$gridlens_coordinator_sha256" <<'PY'
