@@ -169,8 +169,9 @@ try:
                       'container_runtime.py', 'container_probe.py', 'container_onboarding.py', 'legacy_import.py'))}
         if not required <= regular:
             raise ValueError('Docker installer package is incomplete')
-        allowed = required | {'gridlens/scripts/container_updates.py', 'gridlens/scripts/container_update_control.py',
-                              'gridlens/docs/AUTOMATIC_UPDATES.md', 'gridlens/scripts/container_upgrade.py', 'gridlens/scripts/container_access.py',
+        allowed = required | {'gridlens/scripts/container_enrichment.py', 'gridlens/scripts/rewards_reader.cjs',
+                              'gridlens/scripts/container_updates.py', 'gridlens/scripts/container_update_control.py',
+                              'gridlens/docs/AUTOMATIC_UPDATES.md', 'gridlens/docs/ENRICHMENT.md', 'gridlens/scripts/container_upgrade.py', 'gridlens/scripts/container_access.py',
                               'gridlens/docs/TROUBLESHOOTING.md', 'gridlens/docs/COORDINATOR.md', 'gridlens/scripts/container_telemetry.py', 'gridlens/scripts/docker_telemetry_setup.py',
                               'gridlens/start.sh', 'gridlens/README.md', 'gridlens/LICENSE', 'gridlens/THIRD_PARTY_NOTICES.txt', 'gridlens/container/README.md',
                               *('gridlens/docs/' + name for name in ('ACCESS.md', 'CLUSTER_PROTOCOL.md', 'HUB_MONITOR.md',
@@ -203,8 +204,8 @@ PY
  # reads supported saved formats without changing the selected runtime release.
  # These pins are updated together only after the standalone support archive
  # has been published and verified; environment variables cannot override them.
- gridlens_coordinator_commit='745adc0e11c1b332a1ead560add1859da9818d94'
- gridlens_coordinator_sha256='526e1c2590084a47e1655c20c9347b8dac8fc99feb6bc66322b56e9961870a9f'
+ gridlens_coordinator_commit='d624fd9905fb2ef378c0d7ba0d3ca5e7690c4623'
+ gridlens_coordinator_sha256='1d66d4968c91b822e0dab13141b58dcd57e0dafc89398a1b7e2b312eacfd9bb3'
  gridlens_coordinator_url="https://raw.githubusercontent.com/MachoDrone/gridlens-installer/$gridlens_coordinator_commit/support/gridlens-coordinator.zip"
  download "$gridlens_coordinator_url" "$gridlens_scratch/gridlens-coordinator.zip" 4194304
  gridlens_coordinator_version=$(python3 - "$gridlens_scratch" "$gridlens_coordinator_sha256" <<'PY'
